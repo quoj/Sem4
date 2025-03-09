@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:t2305m_flutter/screen/auth/login_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -154,11 +155,9 @@ class CartScreen extends StatelessWidget {
                   ),
                   child: TextButton.icon(
                     onPressed: () {
-                      // Chuyển đến màn hình đăng nhập và xóa lịch sử điều hướng
-                      Navigator.pushAndRemoveUntil(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => const LoginScreen()),
-                            (route) => false,
                       );
                     },
                     icon: const Icon(Icons.logout, color: Colors.red),
@@ -341,18 +340,3 @@ class EditChildInfoScreen extends StatelessWidget {
   }
 }
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Đăng nhập"),
-      ),
-      body: Center(
-        child: const Text("Màn hình đăng nhập"),
-      ),
-    );
-  }
-}
