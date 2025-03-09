@@ -186,59 +186,7 @@ class BulletinWidget extends StatelessWidget {
                 ),
               ),
             ),
-            // Bottom Buttons (Like, Comment, Share)
-            Positioned(
-              top: 410,
-              left: 15,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start, // Canh lề trái
-                children: [
-                  // Thích
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.favorite_border, color: Colors.grey),
-                        onPressed: () {
-                          // Thực hiện hành động thích
-                        },
-                      ),
-                      const Text("Yêu thích"),
-                    ],
-                  ),
-                  const SizedBox(width: 20), // Khoảng cách giữa các nút
-                  // Bình luận
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.comment_outlined, color: Colors.grey),
-                        onPressed: () {
-                          // Hiển thị màn hình bình luận
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) => const CommentScreen(),
-                          );
-                        },
-                      ),
-                      const Text("Bình luận"),
-                    ],
-                  ),
-                  const SizedBox(width: 20), // Khoảng cách giữa các nút
-                  // Chia sẻ
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.share, color: Colors.green),
-                        onPressed: () {
-                          // Thực hiện hành động chia sẻ
-                        },
-                      ),
-                      const Text("Chia sẻ"),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+
           ],
         ),
       ),
@@ -345,9 +293,8 @@ class _BulletinPageState extends State<BulletinPage> {
               child: Image.asset(imagePath, fit: BoxFit.cover),
             ),
             const SizedBox(height: 8),
-            // Nút Thích, Bình luận, Chia sẻ
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,  // Giữ các phần tử gần nhau
               children: [
                 // Thích
                 Row(
@@ -362,6 +309,7 @@ class _BulletinPageState extends State<BulletinPage> {
                     Text(isLiked ? "Đã yêu thích" : "Yêu thích"),
                   ],
                 ),
+                const SizedBox(width: 100), // Đảm bảo khoảng cách chính xác là 20
                 // Bình luận
                 Row(
                   children: [
@@ -378,22 +326,13 @@ class _BulletinPageState extends State<BulletinPage> {
                     const Text("Bình luận"),
                   ],
                 ),
-                // Chia sẻ
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.share, color: Colors.green),
-                      onPressed: () {},
-                    ),
-                    const Text("Chia sẻ"),
-                  ],
-                ),
               ],
             ),
           ],
         ),
       ),
     );
+
   }
 }
 
