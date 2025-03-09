@@ -65,7 +65,7 @@ class _StateLogin extends State<LoginScreen> {
                       text: "Baby",
                       style: TextStyle(
                         color: Color(0xFFFF4880), // Màu của "Baby"
-                        fontSize: 32.0,
+                        fontSize: 48.0, // Tăng kích thước chữ
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -73,7 +73,7 @@ class _StateLogin extends State<LoginScreen> {
                       text: "Care",
                       style: TextStyle(
                         color: Color(0xFF4D65F9), // Màu của "Care"
-                        fontSize: 32.0,
+                        fontSize: 48.0, // Tăng kích thước chữ
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -82,15 +82,10 @@ class _StateLogin extends State<LoginScreen> {
               ),
             ),
 
+
             const SizedBox(height: 10),
             const SizedBox(height: 10),
-            const Text(
-              "Login",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+
             const SizedBox(height: 20),
             TextField(
               controller: emailController,
