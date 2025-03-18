@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:t2305m_app/model/category.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -417,6 +418,8 @@ class _AddMessagePageState extends State<AddMessagePage> {
 
 
 
+
+
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
 
@@ -424,8 +427,11 @@ class AttendancePage extends StatefulWidget {
   _AttendancePageState createState() => _AttendancePageState();
 }
 
-class _AttendancePageState extends State<AttendancePage> with SingleTickerProviderStateMixin {
+class _AttendancePageState extends State<AttendancePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  String qrResult = '';
   final List<Map<String, String>> leaveRequests = [
     {
       "date": "28/06/2023",
@@ -493,11 +499,26 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
           _buildLeaveRequestTab(context),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showLeaveRequestForm(context);
-        },
-        child: Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: "qr_scan",
+            onPressed: () {
+              _showQRScanner(context);
+            },
+            child: Icon(Icons.qr_code_scanner),
+            backgroundColor: Colors.blue, // Màu xanh dương cho nút
+          ),
+          SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: "add_request",
+            onPressed: () {
+              _showLeaveRequestForm(context);
+            },
+            child: Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
@@ -529,11 +550,17 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Ngày: ${request['date']}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text("Ngày: ${request['date']}",
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
                 Text("Lý do: ${request['reason']}", style: TextStyle(fontSize: 16)),
                 SizedBox(height: 8),
-                Text("Trạng thái: ${request['status']}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange)),
+                Text("Trạng thái: ${request['status']}",
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange)),
                 SizedBox(height: 8),
                 Text("Gửi lúc: ${request['time']}", style: TextStyle(fontSize: 16)),
               ],
@@ -555,7 +582,8 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Tháng 6/2023", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text("Tháng 6/2023",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -564,7 +592,9 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
                 children: [
                   Text(entry.key, style: TextStyle(fontSize: 16)),
                   SizedBox(height: 4),
-                  Text(entry.value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(entry.value,
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               );
             }).toList(),
@@ -593,7 +623,8 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(dateRange, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(dateRange,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,7 +635,11 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(entry.key, style: TextStyle(fontSize: 16)),
-                          Text(entry.value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
+                          Text(entry.value,
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue)),
                         ],
                       ),
                     );
@@ -662,7 +697,6 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  // Handle leave request submission
                   final leaveRequest = {
                     "date": _dateController.text,
                     "reason": _reasonController.text,
@@ -681,6 +715,72 @@ class _AttendancePageState extends State<AttendancePage> with SingleTickerProvid
         );
       },
     );
+  }
+
+  void _showQRScanner(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return QRViewExample();
+    }));
+  }
+}
+
+class QRViewExample extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _QRViewExampleState();
+}
+
+class _QRViewExampleState extends State<QRViewExample> {
+  Barcode? result;
+  QRViewController? controller;
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (controller != null) {
+      controller!.pauseCamera();
+      controller!.resumeCamera();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Quét mã QR")),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            flex: 5,
+            child: QRView(
+              key: GlobalKey(debugLabel: 'QR'),
+              onQRViewCreated: _onQRViewCreated,
+              overlay: QrScannerOverlayShape(
+                borderColor: Colors.blue, // Màu xanh dương cho khung quét
+                borderRadius: 10, // Độ bo tròn góc khung
+                borderLength: 30, // Chiều dài đường viền
+                borderWidth: 10, // Độ dày đường viền
+                cutOutSize: 250, // Kích thước của vùng quét
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        result = scanData;
+      });
+      print("QR Code Result: ${scanData.code}");
+    });
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 }
 
