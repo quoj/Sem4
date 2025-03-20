@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:t2305m_app/root_page.dart';
+import 'package:t2305m_app/admin_page.dart'; // Import AdminPage
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,14 +16,24 @@ class _StateLogin extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _hidePassword = true;
-  bool _rememberMe = false; // Checkbox remember me
 
-  login() async {
-    // Gọi API đăng nhập ở đây
-    print(emailController.text);
-    print(passwordController.text);
-    Navigator.pushReplacement(context,
-        MaterialPageRoute(builder: (context) => const RootPage())
+  void login() async {
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    // Nếu nhập đúng tài khoản admin -> vào trang Admin
+    if (email == "admin@gmail.com" && password == "123456") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AdminPage()),
+      );
+      return;
+    }
+
+    // Nếu không nhập gì hoặc nhập sai -> vào RootPage (trang user bình thường)
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const RootPage()),
     );
   }
 
@@ -31,13 +44,7 @@ class _StateLogin extends State<LoginScreen> {
   }
 
   void initialization() async {
-    print('ready in 3...');
-    await Future.delayed(const Duration(seconds: 1));
-    print('ready in 2...');
-    await Future.delayed(const Duration(seconds: 1));
-    print('ready in 1...');
-    await Future.delayed(const Duration(seconds: 1));
-    print('go!');
+    await Future.delayed(const Duration(seconds: 3));
     FlutterNativeSplash.remove();
   }
 
@@ -45,35 +52,27 @@ class _StateLogin extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 100.0, horizontal: 30.0),
+        padding: const EdgeInsets.symmetric(vertical: 100.0, horizontal: 30.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Sửa phần tiêu đề "BabyCare" thành RichText
             Center(
               child: RichText(
-                text: TextSpan(
+                text: const TextSpan(
                   children: [
                     TextSpan(
                       text: "Baby",
                       style: TextStyle(
-                        color: Color(0xFFFF4880), // Màu của "Baby"
-                        fontSize: 48.0, // Tăng kích thước chữ
+                        color: Color(0xFFFF4880),
+                        fontSize: 48.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     TextSpan(
                       text: "Care",
                       style: TextStyle(
-                        color: Color(0xFF4D65F9), // Màu của "Care"
-                        fontSize: 48.0, // Tăng kích thước chữ
+                        color: Color(0xFF4D65F9),
+                        fontSize: 48.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -81,17 +80,12 @@ class _StateLogin extends State<LoginScreen> {
                 ),
               ),
             ),
-
-
-            const SizedBox(height: 10),
-            const SizedBox(height: 10),
-
             const SizedBox(height: 20),
             TextField(
               controller: emailController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15.0)), // Bo tròn viền
+                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
                 ),
                 labelText: "Email",
                 prefixIcon: Icon(Icons.email),
@@ -103,7 +97,7 @@ class _StateLogin extends State<LoginScreen> {
               obscureText: _hidePassword,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15.0)), // Bo tròn viền
+                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
                 ),
                 labelText: "Password",
                 prefixIcon: const Icon(Icons.lock),
@@ -119,10 +113,7 @@ class _StateLogin extends State<LoginScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            const SizedBox(height: 10),
             Center(
               child: ElevatedButton(
                 onPressed: login,
@@ -135,15 +126,10 @@ class _StateLogin extends State<LoginScreen> {
                 ),
                 child: const Text(
                   "Log in",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white, // Thêm màu chữ cho nút "Log in"
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-
           ],
         ),
       ),

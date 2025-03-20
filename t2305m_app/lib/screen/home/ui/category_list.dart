@@ -128,7 +128,7 @@ class BulletinWidget extends StatelessWidget {
                         "Cô giáo A",
                         style: TextStyle(
                           color: Colors.black,
-                          fontSize: 18,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -136,7 +136,7 @@ class BulletinWidget extends StatelessWidget {
                         "10:30 AM",
                         style: TextStyle(
                           color: Colors.grey,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -152,7 +152,7 @@ class BulletinWidget extends StatelessWidget {
                 "Hoạt động hôm nay của các con",
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 18,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -162,12 +162,12 @@ class BulletinWidget extends StatelessWidget {
               top: 140,
               left: 15,
               child: SizedBox(
-                width: 320, // Đặt chiều rộng để tránh bị cắt
+                width: 340, // Đặt chiều rộng để tránh bị cắt
                 child: Text(
-                  "Hôm nay các con đã có buổi học rất thú vị về khoa học. Các con đã làm thí nghiệm với nước và màu sắc.",
+                  "Hôm nay các con đã có buổi học rất thú vị về khóa học. Các con đã làm thí nghiệm với nước và màu sắc.",
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
               ),
