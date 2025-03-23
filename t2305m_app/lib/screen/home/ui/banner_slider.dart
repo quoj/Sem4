@@ -17,96 +17,99 @@ class _BannerSliderState extends State<BannerSlider> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Tiêu đề với thông tin người dùng và avatar
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  // Avatar
-                  GestureDetector(
-                    onTap: () async {
-                      String? newAvatarPath = await _selectAvatar();
-                      if (newAvatarPath != null) {
-                        setState(() {
-                          avatarPath = newAvatarPath;
-                        });
-                      }
-                    },
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.grey.shade300, // Màu nền mặc định
-                      backgroundImage: avatarPath != null
-                          ? AssetImage(avatarPath!)
-                          : null, // Hiển thị ảnh đã chọn nếu có
-                      child: avatarPath == null
-                          ? Icon(
-                        Icons.person, // Icon mặc định khi chưa có ảnh
-                        size: 30,
-                        color: Colors.white,
-                      )
-                          : null,
+    return Container(
+      color: Colors.white, // Nền trắng cho toàn giao diện
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tiêu đề với thông tin người dùng và avatar
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    // Avatar
+                    GestureDetector(
+                      onTap: () async {
+                        String? newAvatarPath = await _selectAvatar();
+                        if (newAvatarPath != null) {
+                          setState(() {
+                            avatarPath = newAvatarPath;
+                          });
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.grey.shade300, // Màu nền mặc định
+                        backgroundImage: avatarPath != null
+                            ? AssetImage(avatarPath!)
+                            : null, // Hiển thị ảnh đã chọn nếu có
+                        child: avatarPath == null
+                            ? Icon(
+                          Icons.person, // Icon mặc định khi chưa có ảnh
+                          size: 30,
+                          color: Colors.white,
+                        )
+                            : null,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10),
-                  // Thông tin người dùng
-                  GestureDetector(
-                    onTap: () {
-                      _showUserInfoDialog(context);
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                    SizedBox(width: 10),
+                    // Thông tin người dùng
+                    GestureDetector(
+                      onTap: () {
+                        _showUserInfoDialog(context);
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          "Mã HS: $studentId",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
+                          SizedBox(height: 4),
+                          Text(
+                            "Mã HS: $studentId",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                        Text(
-                          schoolName,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
+                          Text(
+                            schoolName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              // Ký tự ˇ Unicode
-              GestureDetector(
-                onTap: () {
-                  _showChildSelection(context);
-                },
-                child: Text(
-                  "\u02C7", // Ký tự ˇ
-                  style: TextStyle(
-                    fontSize: 30,
-                    color: Colors.black,
+                  ],
+                ),
+                // Ký tự ˇ Unicode
+                GestureDetector(
+                  onTap: () {
+                    _showChildSelection(context);
+                  },
+                  child: Text(
+                    "\u02C7", // Ký tự ˇ
+                    style: TextStyle(
+                      fontSize: 30,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -120,6 +123,7 @@ class _BannerSliderState extends State<BannerSlider> {
   void _showChildSelection(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white, // Nền trắng cho Bottom Sheet
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(16.0),
@@ -141,7 +145,7 @@ class _BannerSliderState extends State<BannerSlider> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => AddChildScreen()),
+                    MaterialPageRoute(builder: (context) => const AddChildScreen()),
                   );
                 },
                 child: Text(
@@ -165,14 +169,27 @@ class _BannerSliderState extends State<BannerSlider> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Thông tin tài khoản"),
+          backgroundColor: Colors.white, // Nền trắng cho hộp thoại
+          title: Text(
+            "Thông tin tài khoản",
+            style: TextStyle(color: Colors.black),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Tên người dùng: $userName"),
-              Text("Mã HS: $studentId"),
-              Text("Tên trường: $schoolName"),
+              Text(
+                "Tên người dùng: $userName",
+                style: TextStyle(color: Colors.black),
+              ),
+              Text(
+                "Mã HS: $studentId",
+                style: TextStyle(color: Colors.black),
+              ),
+              Text(
+                "Tên trường: $schoolName",
+                style: TextStyle(color: Colors.black),
+              ),
             ],
           ),
           actions: [
@@ -180,7 +197,10 @@ class _BannerSliderState extends State<BannerSlider> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("Đóng"),
+              child: Text(
+                "Đóng",
+                style: TextStyle(color: Colors.blue),
+              ),
             ),
           ],
         );
@@ -195,8 +215,12 @@ class AddChildScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Nền trắng cho toàn màn hình
       appBar: AppBar(
-        title: Text("Thêm con"),
+        backgroundColor: Colors.white, // Thanh tiêu đề nền trắng
+        title: const Text("Thêm con", style: TextStyle(color: Colors.black)),
+        iconTheme: const IconThemeData(color: Colors.black), // Nút back màu đen
+        elevation: 1, // Đường viền nhẹ dưới AppBar
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -208,6 +232,7 @@ class AddChildScreen extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                color: Colors.black,
               ),
             ),
             SizedBox(height: 10),
@@ -227,10 +252,10 @@ class AddChildScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Hàm xác nhận
+                  // Xử lý sự kiện khi bấm xác nhận
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Màu nền xanh dương
+                  backgroundColor: Colors.blue, // Nền xanh dương
                   foregroundColor: Colors.white, // Chữ trắng
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
@@ -245,36 +270,17 @@ class AddChildScreen extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: "Mỗi học sinh sẽ có một mã học sinh duy\n",
+                      text: "Mỗi học sinh sẽ có một mã học sinh duy nhất.\n",
                       style: TextStyle(
                         color: Colors.black,
-                        fontWeight: FontWeight.w300,
                         fontSize: 15,
                       ),
                     ),
                     TextSpan(
-                      text: "nhất.\n",
+                      text: "Phụ huynh vui lòng liên hệ Nhà trường để nhận mã học sinh của con.",
                       style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w300,
-                          fontSize: 15// lighter font weight
-                      ),
-                    ),
-                    TextSpan(
-                      text: "Phụ huynh vui lòng liên hệ Nhà trường để\n",
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w300,
-                          fontSize: 15
-                      ),
-                    ),
-                    TextSpan(
-                      text: "nhận mã học sinh của con.",
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w300,
-                          fontSize: 15
-                        // lighter font weight
+                        color: Colors.black,
+                        fontSize: 15,
                       ),
                     ),
                   ],

@@ -31,51 +31,60 @@ class _CategoryListState extends State<CategoryList> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(10),
-            child: Text(
-              "Tính năng",
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold,
+    return Container( // Đặt nền trắng bao toàn bộ giao diện
+      color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Đặt nền trắng cho tiêu đề "Tính năng"
+            Container(
+              width: double.infinity, // Tránh bị cắt ngang
+              color: Colors.white, // Nền trắng
+              padding: const EdgeInsets.all(10),
+              child: const Text(
+                "Tính năng",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 25.0,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          // GridView được bọc trong một Container hoặc SizedBox để có thể cuộn
-          Container(
-            height: MediaQuery.of(context).size.height, // Đảm bảo grid có thể cuộn
-            child: GridView.builder(
-              shrinkWrap: true, // Cho phép cuộn
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.2, // Tăng tỉ lệ để ô rộng hơn
+            // GridView với nền trắng
+            Container(
+              height: MediaQuery.of(context).size.height,
+              color: Colors.white,
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.2,
+                ),
+                itemCount: categories.length > 8 ? 9 : categories.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 8 || (categories.isNotEmpty && index == categories.length)) {
+                    return const BulletinWidget(); // Bảng tin
+                  }
+                  if (categories.isEmpty) return Container();
+                  return CategoryItem(
+                    category: categories[index],
+                    imageIndex: index,
+                  );
+                },
               ),
-              itemCount: categories.length > 8 ? 9 : categories.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 8 || (categories.isNotEmpty && index == categories.length)) {
-                  return const BulletinWidget(); // Bảng tin
-                }
-                if (categories.isEmpty) return Container();
-                return CategoryItem(
-                  category: categories[index],
-                  imageIndex: index,
-                );
-              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+
 }
 
 
@@ -274,7 +283,7 @@ class _BulletinPageState extends State<BulletinPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(author, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(author, style: const TextStyle(fontSize: 12,fontWeight: FontWeight.bold)),
                     Text(time, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
@@ -282,10 +291,10 @@ class _BulletinPageState extends State<BulletinPage> {
             ),
             const SizedBox(height: 8),
             // Tiêu đề bài đăng
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             // Nội dung bài đăng
-            Text(content),
+            Text(content , style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 8),
             // Ảnh minh họa
             ClipRRect(

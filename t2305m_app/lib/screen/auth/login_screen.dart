@@ -1,41 +1,51 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:t2305m_app/root_page.dart';
-import 'package:t2305m_app/admin_page.dart'; // Import AdminPage
+import 'package:t2305m_app/admin_page.dart';
+import 'package:t2305m_app/screen/home/home_screen.dart';
+
+import '../../api/api_service.dart';
+import '../../models/login_request.dart';
+import '../../test.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+
   @override
   _StateLogin createState() => _StateLogin();
 }
+
 
 class _StateLogin extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _hidePassword = true;
 
-  void login() async {
-    String email = emailController.text.trim();
-    String password = passwordController.text.trim();
+  bool isAdmin = false; // Thêm biến này để xác định quyền admin
 
-    // Nếu nhập đúng tài khoản admin -> vào trang Admin
-    if (email == "admin@gmail.com" && password == "123456") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const AdminPage()),
-      );
-      return;
+  Future<void> login(String email, String password) async {
+    final dio = Dio();
+    final apiService = ApiService(dio);
+
+    try {
+      final user = await apiService.loginUser(LoginRequest(email: email, password: password));
+      print("Đăng nhập thành công: ${user.name}");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) =>  RootPage()),
+        );
+
+    } catch (e) {
+      print("Lỗi đăng nhập: $e");
     }
-
-    // Nếu không nhập gì hoặc nhập sai -> vào RootPage (trang user bình thường)
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const RootPage()),
-    );
   }
+
+
 
   @override
   void initState() {
@@ -43,10 +53,12 @@ class _StateLogin extends State<LoginScreen> {
     initialization();
   }
 
+
   void initialization() async {
     await Future.delayed(const Duration(seconds: 3));
     FlutterNativeSplash.remove();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +128,9 @@ class _StateLogin extends State<LoginScreen> {
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: login,
+                onPressed: () {
+                  login(emailController.text.trim(), passwordController.text.trim());
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(horizontal: 120, vertical: 15),
@@ -136,3 +150,6 @@ class _StateLogin extends State<LoginScreen> {
     );
   }
 }
+
+
+
