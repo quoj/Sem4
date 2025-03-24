@@ -3,6 +3,7 @@ import 'package:retrofit/error_logger.dart';
 import 'package:retrofit/http.dart';
 import '../models/login_request.dart';
 import '../models/user.dart';
+import '../models/schedule.dart';
 
 
 part 'api_service.g.dart';
@@ -17,4 +18,6 @@ abstract class ApiService {
   @POST("/users/login")
   Future<User> loginUser(@Body() LoginRequest loginRequest);
 
+  @GET("/schedules")
+  Future<List<Schedule>> getSchedules();
 }

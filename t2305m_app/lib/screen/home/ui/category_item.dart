@@ -1,3 +1,6 @@
+import 'package:dio/dio.dart';
+import 'package:t2305m_app/api/api_service.dart';
+import 'package:t2305m_app/models/schedule.dart';
 import 'package:flutter/material.dart';
 import 'package:t2305m_app/model/category.dart';
 import 'package:intl/intl.dart';
@@ -145,6 +148,15 @@ class _SchedulePageState extends State<SchedulePage> {
                   SizedBox(height: 20),
                   Text("Thời khóa biểu:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   SizedBox(height: 10),
+                  // Hiển thị tên môn học chính
+                  schedule.isNotEmpty && schedule.first != "Không có lịch học"
+                      ? Text(
+                    schedule.first.split(" - ").last, // Lấy tên môn học từ chuỗi
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.blue),
+                  )
+                      : Container(), // Nếu không có lịch, không hiển thị gì
+                  SizedBox(height: 10),
+
 
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
