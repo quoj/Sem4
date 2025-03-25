@@ -102,6 +102,7 @@ class CategoryItem extends StatelessWidget {
 
 // Các trang mẫu
 class SchedulePage extends StatefulWidget {
+
   const SchedulePage({super.key});
 
   @override
@@ -109,19 +110,42 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  String? avatarPath;
+  late ApiService apiService;
+  List<Schedule> schedules = [];
   DateTime selectedDate = DateTime.now();
+  bool isLoading = true;
 
-  final Map<String, List<String>> scheduleByDate = {
-    "26/01/2025": ["8:00 AM - Toán học", "10:00 AM - Lập trình"],
-    "11/01/2025": ["1:00 PM - Kỹ thuật phần mềm", "3:00 PM - Hệ thống thông tin"],
-    "12/01/2025": ["8:30 AM - Cơ sở dữ liệu", "2:00 PM - Quản lý dự án"]
-  };
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService(Dio());
+    fetchSchedules();
+  }
+
+  void fetchSchedules() async {
+    try {
+      List<Schedule> data = await apiService.getSchedules();
+      setState(() {
+        schedules = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi API: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    String currentDate = DateFormat('dd/MM/yyyy').format(selectedDate);
-    List<String> schedule = scheduleByDate[currentDate] ?? ["Không có lịch học"];
+    String currentDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+
+    // 🔹 **Lọc lịch học theo ngày được chọn**
+    List<Schedule> filteredSchedules =
+    schedules.where((s) => DateFormat('yyyy-MM-dd').format(s.dayOfWeek) == currentDate).toList();
+
 
     return Scaffold(
       appBar: AppBar(title: Text("Thời khóa biểu")),
@@ -149,18 +173,19 @@ class _SchedulePageState extends State<SchedulePage> {
                   Text("Thời khóa biểu:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   SizedBox(height: 10),
                   // Hiển thị tên môn học chính
-                  schedule.isNotEmpty && schedule.first != "Không có lịch học"
+                  // 🔹 Kiểm tra nếu có lịch học
+                  filteredSchedules.isNotEmpty
                       ? Text(
-                    schedule.first.split(" - ").last, // Lấy tên môn học từ chuỗi
+                    filteredSchedules.first.subjectId, // Tên môn học
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.blue),
                   )
                       : Container(), // Nếu không có lịch, không hiển thị gì
                   SizedBox(height: 10),
 
-
+// 🔹 Hiển thị danh sách lịch học từ API
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: schedule.map((subject) {
+                    children: filteredSchedules.map((schedule) {
                       return Container(
                         padding: EdgeInsets.all(8),
                         margin: EdgeInsets.only(bottom: 8),
@@ -170,14 +195,25 @@ class _SchedulePageState extends State<SchedulePage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.star, color: Colors.yellow.shade700),
+                            Icon(Icons.book, color: Colors.blue), // Đổi icon thành sách 📖
                             SizedBox(width: 10),
-                            Text(subject, style: TextStyle(fontSize: 16)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(schedule.subjectId, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), // Môn học
+                                Text(
+                                  "${DateFormat('HH:mm').format(schedule.startTime)} - ${DateFormat('HH:mm').format(schedule.endTime)} | GV: ${schedule.teacherId}",
+                                  style: TextStyle(fontSize: 14),
+                                ), // Thời gian học + mã giáo viên
+                              ],
+                            ),
                           ],
                         ),
                       );
                     }).toList(),
                   ),
+
+
                 ],
               ),
             ),
