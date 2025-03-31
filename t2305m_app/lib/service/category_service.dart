@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:t2305m_app/model/category.dart';
+import 'package:t2305m_app/models/announcements.dart';
 
 class CategoryService{
   final Dio _dio;
@@ -13,12 +14,18 @@ class CategoryService{
       final res = await _dio.get("/product/categories");
       final data = res.data as List;
       return data.map((json) => Category.fromJson(json)).toList();
-      // List<Category> data = [];
-      // for(int i=0;i<res.data.length;i++){
-      //   data.add(Category.fromJson(res.data[i]));
-      // }
-      // return data;
     }on DioException {
+      return [];
+    }
+  }
+
+  Future<List<Announcement>> getAnnouncements() async {
+    try {
+      final res = await _dio.get("/announcements");
+      final data = res.data as List;
+      return data.map((json) => Announcement.fromJson(json)).toList();
+    } catch (e) {
+      print("Lỗi khi tải thông báo: $e");
       return [];
     }
   }

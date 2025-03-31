@@ -1,14 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:retrofit/error_logger.dart';
 import 'package:retrofit/http.dart';
+import '../models/announcements.dart';
+import '../models/messages.dart';
 import '../models/login_request.dart';
 import '../models/user.dart';
 import '../models/schedule.dart';
-
+import '../models/feedback.dart';
+import 'package:retrofit/error_logger.dart';
 
 part 'api_service.g.dart';
 
-@RestApi(baseUrl: "http://10.0.2.2:8080") // Nếu chạy trên Android Emulator
+@RestApi(baseUrl: "http://10.0.2.2:8080")
 abstract class ApiService {
   factory ApiService(Dio dio, {String baseUrl}) = _ApiService;
 
@@ -21,5 +23,22 @@ abstract class ApiService {
   @GET("/schedules")
   Future<List<Schedule>> getSchedules();
 
+  @GET("/messages")
+  Future<List<Message>> getMessage();
 
+  @POST("/messages")
+  Future<void> sendMessage(@Body() Message message);
+
+  @GET("/feedbacks")
+  Future<List<FeedbackModel>> getFeedback();
+
+  @MultiPart()
+  @POST("/feedbacks")
+  Future<void> sendFeedback(@Body() Map<String, dynamic> feedbackData);
+
+  @GET("/announcements")
+  Future<List<Announcement>> getAnnouncements();
+
+  @POST("/announcements")
+  Future<void> createAnnouncement(@Body() Announcement announcement);
 }

@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:t2305m_app/api/api_service.dart';
+import 'package:t2305m_app/models/feedback.dart';
 import 'package:t2305m_app/models/schedule.dart';
+import 'package:t2305m_app/models/messages.dart';
 import 'package:flutter/material.dart';
 import 'package:t2305m_app/model/category.dart';
 import 'package:intl/intl.dart';
@@ -278,20 +280,59 @@ class _SchedulePageState extends State<SchedulePage> {
 
 
 
-class MessagePage extends StatelessWidget {
+
+
+class MessagePage extends StatefulWidget {
   const MessagePage({super.key});
+
+  @override
+  _MessagePageState createState() => _MessagePageState();
+}
+
+class _MessagePageState extends State<MessagePage> {
+  late ApiService apiService;
+  List<Message> messages = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService(Dio());
+    fetchMessages();
+  }
+
+  void fetchMessages() async {
+    try {
+      List<Message> data = await apiService.getMessage();
+      setState(() {
+        messages = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi API: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Lời nhắn")),
+      appBar: AppBar(title: const Text("Lời nhắn")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: EdgeInsets.all(16.0),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : messages.isEmpty
+            ? const Center(child: Text("Không có lời nhắn nào."))
+            : ListView.builder(
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            Message message = messages[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Colors.blue.shade100,
                 borderRadius: BorderRadius.circular(10),
@@ -302,54 +343,63 @@ class MessagePage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("28/06/2023",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text("10:26",
-                          style:
-                          TextStyle(fontSize: 16, color: Colors.grey.shade700)),
+                      Text(
+                        message.createdAt.toString(),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        message.status,
+                        style: TextStyle(
+                            fontSize: 16, color: Colors.grey.shade700),
+                      ),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(
-                    "Con bị ốm, nhờ cô quan tâm hơn đến con",
-                    style: TextStyle(fontSize: 16),
+                    message.content,
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  SizedBox(height: 10),
-                  Image.asset(
-                    "assets/images/bangtin.png",
-                    height: 150,
-                    width: 200,
-                    fit: BoxFit.cover,
-                  ),
-                  SizedBox(height: 10),
+                  if (message.imagePath != null &&
+                      message.imagePath!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Image.network(
+                        message.imagePath!, // Đã kiểm tra null trước đó
+                        height: 150,
+                        width: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.image_not_supported, size: 50),
+                      ),
+                    ),
+                  const SizedBox(height: 10),
                   Text(
-                    "Cô Nguyễn Thị Hồng Anh đã xác nhận",
-                    style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                    message.status == "confirmed"
+                        ? "Tin nhắn đã xác nhận"
+                        : "Tin nhắn chưa xác nhận",
+                    style: const TextStyle(
+                        fontSize: 16, fontStyle: FontStyle.italic),
                   ),
                 ],
               ),
-            ),
-            Spacer(),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: FloatingActionButton(
-                onPressed: () {
-                  // Chuyển đến trang Thêm lời nhắn
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AddMessagePage()),
-                  );
-                },
-                child: Icon(Icons.add),
-              ),
-            ),
-          ],
+            );
+          },
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddMessagePage()),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
 }
+
 
 class AddMessagePage extends StatefulWidget {
   const AddMessagePage({super.key});
@@ -361,7 +411,10 @@ class AddMessagePage extends StatefulWidget {
 class _AddMessagePageState extends State<AddMessagePage> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
-  File? _selectedImage; // Lưu trữ ảnh đã chọn
+  File? _selectedImage;
+  final ApiService _apiService = ApiService(Dio());
+
+  bool _isLoading = false; // Trạng thái loading
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -369,17 +422,80 @@ class _AddMessagePageState extends State<AddMessagePage> {
 
     if (image != null) {
       setState(() {
-        _selectedImage = File(image.path); // Lưu ảnh đã chọn
+        _selectedImage = File(image.path);
       });
     }
+  }
+
+  Future<String?> _uploadImage(File imageFile) async {
+    try {
+      FormData formData = FormData.fromMap({
+        "file": await MultipartFile.fromFile(imageFile.path),
+      });
+
+      Response response = await Dio().post("http://10.0.2.2:8080/messages", data: formData);
+
+      if (response.statusCode == 200) {
+        return response.data['imageUrl']; // Giả sử server trả về URL ảnh đã upload
+      }
+    } catch (e) {
+      print("Lỗi khi upload ảnh: $e");
+    }
+    return null;
+  }
+
+  Future<void> _sendMessage() async {
+    if (_dateController.text.isEmpty || _messageController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin!")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      String? imageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await _uploadImage(_selectedImage!);
+      }
+
+      Message newMessage = Message(
+        id: 0, // Server sẽ tự tạo ID
+        senderId: 1, // Cập nhật theo người dùng
+        receiverId: 2, // Cập nhật theo người nhận
+        studentId: 3, // ID học sinh
+        content: _messageController.text,
+        imagePath: imageUrl,
+        status: "pending",
+        createdAt: DateTime.now(),
+      );
+
+      await _apiService.sendMessage(newMessage);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gửi lời nhắn thành công!")),
+      );
+
+      Navigator.pop(context, true); // Quay lại trang trước và cập nhật danh sách
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Lỗi khi gửi lời nhắn!")),
+      );
+      print("Lỗi khi gửi tin nhắn: $e");
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Thêm lời nhắn"),
-      ),
+      appBar: AppBar(title: const Text("Thêm lời nhắn")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -390,7 +506,7 @@ class _AddMessagePageState extends State<AddMessagePage> {
               decoration: InputDecoration(
                 labelText: "Nhắn cho ngày *",
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.calendar_today),
+                  icon: const Icon(Icons.calendar_today),
                   onPressed: () async {
                     DateTime? pickedDate = await showDatePicker(
                       context: context,
@@ -408,9 +524,9 @@ class _AddMessagePageState extends State<AddMessagePage> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             GestureDetector(
-              onTap: _pickImage, // Gọi hàm chọn ảnh
+              onTap: _pickImage,
               child: Container(
                 height: 150,
                 width: double.infinity,
@@ -421,40 +537,33 @@ class _AddMessagePageState extends State<AddMessagePage> {
                 child: _selectedImage == null
                     ? Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                  children: const [
                     Icon(Icons.image, size: 50, color: Colors.grey),
-                    Text("Thêm hình ảnh",
-                        style: TextStyle(color: Colors.grey)),
+                    Text("Thêm hình ảnh", style: TextStyle(color: Colors.grey)),
                   ],
                 )
-                    : Image.file(
-                  _selectedImage!,
-                  fit: BoxFit.cover,
-                ),
+                    : Image.file(_selectedImage!, fit: BoxFit.cover),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
               controller: _messageController,
               maxLines: 4,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Nội dung *",
                 hintText:
                 "Nhập lời nhắn muốn gửi đến giáo viên (VD: nhờ cô giáo lưu ý về sức khỏe của con, cho con uống thuốc...)",
                 border: OutlineInputBorder(),
               ),
             ),
-            Spacer(),
+            const Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Xử lý khi nhấn nút Gửi
-                  print("Ngày: ${_dateController.text}");
-                  print("Nội dung: ${_messageController.text}");
-                  print("Hình ảnh: ${_selectedImage?.path}");
-                },
-                child: Text("Gửi"),
+                onPressed: _isLoading ? null : _sendMessage, // Disable nút khi đang gửi
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Gửi"),
               ),
             ),
           ],
@@ -1474,36 +1583,86 @@ class ClassDetailPage extends StatelessWidget {
 }
 
 
-class FeedbackPage extends StatelessWidget {
+class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
+
+  @override
+  _FeedbackPageState createState() => _FeedbackPageState();
+}
+
+class _FeedbackPageState extends State<FeedbackPage> {
+  final Dio _dio = Dio();
+  late ApiService _apiService;
+  List<FeedbackModel> feedbacks = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = ApiService(_dio);
+    _fetchFeedbacks();
+  }
+
+  Future<void> _fetchFeedbacks() async {
+    try {
+      final response = await _apiService.getFeedback();
+      setState(() {
+        feedbacks = response;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi khi lấy góp ý: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Hòm thư góp ý")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "10:22, 28/06/2023",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator()) // Hiển thị loading
+          : ListView.builder(
+        itemCount: feedbacks.length,
+        itemBuilder: (context, index) {
+          final feedback = feedbacks[index];
+          return Card(
+            margin: const EdgeInsets.all(8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${feedback.createdAt}",
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    feedback.content,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  if (feedback.imageUrl != null) ...[
+                    const SizedBox(height: 8),
+                    Image.network(
+                      feedback.imageUrl!,
+                      height: 150,
+                      fit: BoxFit.cover,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Đã tiếp nhận",
+                    style: TextStyle(color: Colors.blue, fontSize: 16),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Sàn lớp học có đoạn trơn trượt dễ bị ngã. Mong nhà trường lưu ý thêm vấn đề này.",
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Image.asset('assets/images/noithat.jpg'), // Hiển thị ảnh từ assets
-            const SizedBox(height: 8),
-            const Text(
-              "Đã tiếp nhận",
-              style: TextStyle(color: Colors.blue, fontSize: 16),
-            ),
-          ],
-        ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -1528,6 +1687,7 @@ class AddFeedbackPage extends StatefulWidget {
 
 class _AddFeedbackPageState extends State<AddFeedbackPage> {
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _contentController = TextEditingController();
   List<File> _images = [];
 
   // Hàm chọn ảnh từ thư viện hoặc camera
@@ -1554,6 +1714,52 @@ class _AddFeedbackPageState extends State<AddFeedbackPage> {
     });
   }
 
+  // Hàm gửi góp ý lên server
+  Future<void> _sendFeedback() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng nhập nội dung góp ý")),
+      );
+      return;
+    }
+
+    try {
+      final feedbackData = {
+        "senderId": 3,
+        "receiverId": 3,
+        "content": _contentController.text,
+        "status": "pending",
+        "createdAt": DateTime.now().toIso8601String(),
+        "images": [],
+      };
+
+      final dio = Dio();
+      dio.options.headers["Content-Type"] = "application/json";
+      final apiService = ApiService(dio);
+      await apiService.sendFeedback(feedbackData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Góp ý đã được gửi thành công!")),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      String errorMessage = "Có lỗi xảy ra, vui lòng thử lại!";
+
+      if (e is DioException) {
+        errorMessage = "Lỗi: ${e.response?.statusCode} - ${e.response?.data}";
+        print("Chi tiết lỗi: ${e.response?.data}");
+      } else {
+        print("Lỗi không xác định: $e");
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1565,8 +1771,6 @@ class _AddFeedbackPageState extends State<AddFeedbackPage> {
           children: [
             const Text("Thêm hình ảnh (tối đa 5 ảnh)"),
             const SizedBox(height: 8),
-
-            // Hiển thị danh sách ảnh đã chọn
             Wrap(
               spacing: 8,
               children: _images.asMap().entries.map((entry) {
@@ -1587,10 +1791,7 @@ class _AddFeedbackPageState extends State<AddFeedbackPage> {
                 );
               }).toList(),
             ),
-
             const SizedBox(height: 8),
-
-            // Nút chọn ảnh
             Row(
               children: [
                 ElevatedButton.icon(
@@ -1606,34 +1807,27 @@ class _AddFeedbackPageState extends State<AddFeedbackPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
             const Text("Nội dung *"),
             const SizedBox(height: 8),
-            const TextField(
+            TextField(
+              controller: _contentController,
               maxLines: 3,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: 'Nhập nội dung góp ý...',
               ),
             ),
             const SizedBox(height: 16),
             const Text(
-              "Thông tin góp ý, phản ánh của phụ huynh sẽ được gửi tới nhà trường dưới hình thức giấu tên",
+              "Thông tin góp ý sẽ được gửi ẩn danh",
               style: TextStyle(color: Colors.grey),
             ),
             const Spacer(),
-
-            // Nút gửi góp ý
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
-                onPressed: () {
-                  // Xử lý khi nhấn nút "Gửi"
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Góp ý đã được gửi!")),
-                  );
-                },
+                onPressed: _sendFeedback,
                 child: const Text("Gửi"),
               ),
             ),
