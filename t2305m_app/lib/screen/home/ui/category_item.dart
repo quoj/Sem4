@@ -5,6 +5,7 @@ import 'package:t2305m_app/models/schedule.dart';
 import 'package:t2305m_app/models/messages.dart';
 import 'package:t2305m_app/models/tuition.dart';
 import 'package:t2305m_app/models/health.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 import 'package:flutter/material.dart';
 import 'package:t2305m_app/model/category.dart';
@@ -1045,27 +1046,76 @@ class _StudyPageState extends State<StudyPage> with SingleTickerProviderStateMix
 
   /// **Tab Nhận Xét**
   Widget _buildCommentsTab() {
-    String today = DateFormat('dd/MM/yyyy').format(DateTime.now());
-    String yesterday = DateFormat('dd/MM/yyyy').format(DateTime.now().subtract(Duration(days: 1)));
+    // Format ngày
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    String yesterday = DateFormat('yyyy-MM-dd').format(DateTime.now().subtract(Duration(days: 1)));
 
-    return ListView(
+    // Lọc nhận xét theo ngày
+    List<StudyComment> todayComments = studyComments.where((c) {
+      return DateFormat('yyyy-MM-dd').format(c.commentDate) == today;
+    }).toList();
+
+    List<StudyComment> yesterdayComments = studyComments.where((c) {
+      return DateFormat('yyyy-MM-dd').format(c.commentDate) == yesterday;
+    }).toList();
+
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildDateSection(today, [
-          _buildCommentTile("Nhận xét ngày", "Con biết cất đồ chơi đúng nơi quy định", Icons.comment, Colors.blue),
-          _buildCommentTile("Bữa ăn", "Con ăn hết suất", Icons.restaurant, Colors.orange),
-          _buildCommentTile("Ngủ trưa", "Con có ý thức tự giác khi ngủ", Icons.bedtime, Colors.green),
-          _buildCommentTile("Vệ sinh", "Con biết gọi cô khi buồn đi vệ sinh", Icons.wash, Colors.purple),
-        ]),
-        _buildDateSection(yesterday, [
-          _buildCommentTile("Nhận xét ngày", "Con học thuộc bài hát rất nhanh", Icons.comment, Colors.blue),
-          _buildCommentTile("Bữa ăn", "Con ăn giỏi", Icons.restaurant, Colors.orange),
-          _buildCommentTile("Ngủ trưa", "Con ngủ bình thường", Icons.bedtime, Colors.green),
-          _buildCommentTile("Vệ sinh", "Con đi vệ sinh bình thường", Icons.wash, Colors.purple),
-        ]),
+        if (todayComments.isNotEmpty)
+          _buildDateSection("Hôm nay", todayComments.map(_mapCommentToTile).toList()),
+        if (yesterdayComments.isNotEmpty)
+          _buildDateSection("Hôm qua", yesterdayComments.map(_mapCommentToTile).toList()),
+        if (todayComments.isEmpty && yesterdayComments.isEmpty)
+          const Center(child: Text("Không có nhận xét gần đây")),
       ],
     );
   }
+  /// **Chuyển StudyComment thành widget ListTile**
+  Widget _mapCommentToTile(StudyComment comment) {
+    IconData icon = Icons.comment;
+    Color color = Colors.grey;
+
+    switch (comment.commentType.toLowerCase()) {
+      case 'meal':
+      case 'bữa ăn':
+        icon = Icons.restaurant;
+        color = Colors.orange;
+        break;
+      case 'nap':
+      case 'ngủ trưa':
+        icon = Icons.bedtime;
+        color = Colors.green;
+        break;
+      case 'hygiene':
+      case 'vệ sinh':
+        icon = Icons.wash;
+        color = Colors.purple;
+        break;
+      case 'note':
+      case 'nhận xét ngày':
+      case 'general':
+      default:
+        icon = Icons.comment;
+        color = Colors.blue;
+    }
+
+    return _buildCommentTile(
+      _capitalize(comment.commentType),
+      comment.commentText ?? "",
+      icon,
+      color,
+    );
+  }
+
+  /// **Viết hoa chữ cái đầu**
+  String _capitalize(String input) {
+    if (input.isEmpty) return input;
+    return input[0].toUpperCase() + input.substring(1).toLowerCase();
+  }
+
 
   /// **Tab Kết Quả Học Tập**
   Widget _buildStudyResultsTab() {
@@ -1382,29 +1432,142 @@ class _HealthPageState extends State<HealthPage> {
     );
   }
 }
+// Trang Tăng trưởng
 class GrowthPage extends StatelessWidget {
   const GrowthPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Giả lập dữ liệu tăng trưởng
+    final List<FlSpot> heightData = [
+      FlSpot(1, 70),
+      FlSpot(2, 75),
+      FlSpot(3, 80),
+      FlSpot(4, 85),
+      FlSpot(5, 90),
+    ];
+
+    final List<FlSpot> weightData = [
+      FlSpot(1, 8),
+      FlSpot(2, 9),
+      FlSpot(3, 10),
+      FlSpot(4, 11),
+      FlSpot(5, 12),
+    ];
+
     return Scaffold(
       appBar: AppBar(title: const Text("Tăng trưởng")),
-      body: Center(
-        child: Text("Chi tiết Tăng trưởng sẽ được hiển thị ở đây."),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              "Biểu đồ tăng trưởng",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: LineChart(
+                LineChartData(
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: heightData,
+                      isCurved: true,
+                      barWidth: 3,
+                      color: Colors.blue,
+                      dotData: FlDotData(show: true),
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                    LineChartBarData(
+                      spots: weightData,
+                      isCurved: true,
+                      barWidth: 3,
+                      color: Colors.green,
+                      dotData: FlDotData(show: true),
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                  ],
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 1,
+                        getTitlesWidget: (value, meta) => Text('Tháng ${value.toInt()}'),
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: true),
+                    ),
+                  ),
+                  gridData: FlGridData(show: true),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: const [
+                Legend(color: Colors.blue, label: "Chiều cao"),
+                Legend(color: Colors.green, label: "Cân nặng"),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+// Widget chú thích biểu đồ
+class Legend extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const Legend({required this.color, required this.label, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(width: 12, height: 12, color: color),
+        const SizedBox(width: 4),
+        Text(label),
+      ],
+    );
+  }
+}
+
+// Trang Sổ sức khỏe
 class HealthRecordsPage extends StatelessWidget {
   const HealthRecordsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Dữ liệu mẫu
+    final List<String> healthRecords = [
+      "Bé bị sốt nhẹ ngày 2/3",
+      "Đã tiêm phòng sởi ngày 10/3",
+      "Khám tổng quát ngày 20/3 - sức khỏe tốt",
+    ];
+
     return Scaffold(
       appBar: AppBar(title: const Text("Sổ sức khỏe")),
-      body: Center(
-        child: Text("Thông tin Sổ sức khỏe sẽ được hiển thị ở đây."),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: healthRecords.length,
+        itemBuilder: (context, index) {
+          return Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              leading: const Icon(Icons.note_alt_outlined, color: Colors.blue),
+              title: Text(
+                healthRecords[index],
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

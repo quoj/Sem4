@@ -19,25 +19,24 @@ class StudyComment {
     required this.commentDate,
   });
 
-  /// Chuyển đổi JSON thành Object
   factory StudyComment.fromJson(Map<String, dynamic> json) {
     return StudyComment(
       id: json['id'],
-      studentId: json['student_id'],
-      commentType: json['comment_type'],
-      commentText: json['comment_text'],
-      commentDate: DateFormat("yyyy-MM-dd").parse(json['comment_date']),
+      studentId: json['studentId'],
+      commentType: json['commentType'],
+      commentText: json['commentText'],
+      commentDate: DateTime.parse(json['commentDate']),
     );
   }
 
-  /// Chuyển đổi Object thành JSON
   Map<String, dynamic> toJson() {
     return {
       "id": id,
-      "student_id": studentId,
-      "comment_type": commentType,
-      "comment_text": commentText,
-      "comment_date": DateFormat("yyyy-MM-dd").format(commentDate),
+      "studentId": studentId,
+      "commentType": commentType,
+      "commentText": commentText,
+      "commentDate": DateFormat("yyyy-MM-dd").format(commentDate),
     };
   }
+
 }

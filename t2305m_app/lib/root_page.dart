@@ -138,8 +138,8 @@ class _RootPageState extends State<RootPage> {
       bottomNavigationBar: BottomNavigationBar(
         items: [
           const BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.userAlt),
-            label: "Home",
+            icon: FaIcon(FontAwesomeIcons.home),
+            label: "Trang chủ",
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.widgets),
@@ -147,12 +147,12 @@ class _RootPageState extends State<RootPage> {
           ),
           const BottomNavigationBarItem(
             icon: FaIcon(FontAwesomeIcons.bell),
-            label: "Notification",
+            label: "Thông báo ",
           ),
           if (!widget.isAdmin)
             const BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: "Settings",
+              icon: Icon(FontAwesomeIcons.userAlt),
+              label: "Cá nhân",
             ),
         ],
         selectedItemColor: Colors.orange,
