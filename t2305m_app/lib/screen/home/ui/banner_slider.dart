@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:t2305m_app/models/user.dart';
+import 'package:t2305m_app/api/api_service.dart';
+import 'package:dio/dio.dart';
 
 class BannerSlider extends StatefulWidget {
   const BannerSlider({super.key});
@@ -8,107 +11,129 @@ class BannerSlider extends StatefulWidget {
 }
 
 class _BannerSliderState extends State<BannerSlider> {
-  final String userName = "Nguyễn Văn A";
-  final String studentId = "12345"; // Mã HS
-  final String schoolName = "Trường Mầm Non Hoa Súng"; // Tên trường
-
-  // Biến lưu đường dẫn ảnh đại diện, nếu null thì dùng khung mặc định
+  late ApiService apiService;
+  late Future<List<User>> users;
   String? avatarPath;
+  String? userName;
+  String? studentId;
+  String? schoolName;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService(Dio());
+    users = apiService.getUsers();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white, // Nền trắng cho toàn giao diện
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Tiêu đề với thông tin người dùng và avatar
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: FutureBuilder<List<User>>(
+        future: users,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Lỗi khi tải dữ liệu người dùng'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('Không có dữ liệu người dùng'));
+          } else {
+            final user = snapshot.data!.first; // Lấy người dùng đầu tiên
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    // Avatar
-                    GestureDetector(
-                      onTap: () async {
-                        String? newAvatarPath = await _selectAvatar();
-                        if (newAvatarPath != null) {
-                          setState(() {
-                            avatarPath = newAvatarPath;
-                          });
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.grey.shade300, // Màu nền mặc định
-                        backgroundImage: avatarPath != null
-                            ? AssetImage(avatarPath!)
-                            : null, // Hiển thị ảnh đã chọn nếu có
-                        child: avatarPath == null
-                            ? Icon(
-                          Icons.person, // Icon mặc định khi chưa có ảnh
-                          size: 30,
-                          color: Colors.white,
-                        )
-                            : null,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    // Thông tin người dùng
-                    GestureDetector(
-                      onTap: () {
-                        _showUserInfoDialog(context);
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // Tiêu đề với thông tin người dùng và avatar
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            userName,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                          // Avatar
+                          GestureDetector(
+                            onTap: () async {
+                              String? newAvatarPath = await _selectAvatar();
+                              if (newAvatarPath != null) {
+                                setState(() {
+                                  avatarPath = newAvatarPath;
+                                });
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Colors.grey.shade300, // Màu nền mặc định
+                              backgroundImage: avatarPath != null
+                                  ? AssetImage(avatarPath!)
+                                  : null, // Hiển thị ảnh đã chọn nếu có
+                              child: avatarPath == null
+                                  ? Icon(
+                                Icons.person, // Icon mặc định khi chưa có ảnh
+                                size: 30,
+                                color: Colors.white,
+                              )
+                                  : null,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            "Mã HS: $studentId",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black,
-                            ),
-                          ),
-                          Text(
-                            schoolName,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black,
+                          SizedBox(width: 10),
+                          // Thông tin người dùng
+                          GestureDetector(
+                            onTap: () {
+                              _showUserInfoDialog(context);
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  "Mã HS: ${user.id}",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  schoolName ?? 'Tên trường',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                // Ký tự ˇ Unicode
-                GestureDetector(
-                  onTap: () {
-                    _showChildSelection(context);
-                  },
-                  child: Text(
-                    "\u02C7", // Ký tự ˇ
-                    style: TextStyle(
-                      fontSize: 30,
-                      color: Colors.black,
-                    ),
+                      // Ký tự ˇ Unicode
+                      GestureDetector(
+                        onTap: () {
+                          _showChildSelection(context);
+                        },
+                        child: Text(
+                          "\u02C7", // Ký tự ˇ
+                          style: TextStyle(
+                            fontSize: 30,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+        },
       ),
     );
   }
@@ -179,15 +204,15 @@ class _BannerSliderState extends State<BannerSlider> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Tên người dùng: $userName",
+                "Tên người dùng: ${userName ?? 'Chưa có tên'}",
                 style: TextStyle(color: Colors.black),
               ),
               Text(
-                "Mã HS: $studentId",
+                "Mã HS: ${studentId ?? 'Chưa có mã'}",
                 style: TextStyle(color: Colors.black),
               ),
               Text(
-                "Tên trường: $schoolName",
+                "Tên trường: ${schoolName ?? 'Chưa có trường'}",
                 style: TextStyle(color: Colors.black),
               ),
             ],
@@ -208,6 +233,7 @@ class _BannerSliderState extends State<BannerSlider> {
     );
   }
 }
+
 
 class AddChildScreen extends StatelessWidget {
   const AddChildScreen({super.key});

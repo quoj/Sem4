@@ -3,9 +3,14 @@ import 'package:retrofit/http.dart';
 import '../models/announcements.dart';
 import '../models/messages.dart';
 import '../models/login_request.dart';
+import '../models/study_comments.dart';
+import '../models/study_results.dart';
 import '../models/user.dart';
 import '../models/schedule.dart';
 import '../models/feedback.dart';
+import '../models/tuition.dart';
+import '../models/health.dart';
+
 import 'package:retrofit/error_logger.dart';
 
 part 'api_service.g.dart';
@@ -41,4 +46,16 @@ abstract class ApiService {
 
   @POST("/announcements")
   Future<void> createAnnouncement(@Body() Announcement announcement);
+
+  @GET("/study_comments")
+  Future<List<StudyComment>> getStudyComment();
+
+  @GET("/study_results")
+  Future<List<StudyResult>> getStudyResult();
+
+  @GET("/tuitions")
+  Future<List<Tuition>> getTuitions();
+
+  @GET("/health")
+  Future<List<Health>> getHealth();
 }

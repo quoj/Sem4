@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:t2305m_app/models/user.dart';
+import 'package:t2305m_app/api/api_service.dart';
+import 'package:dio/dio.dart';
 import 'package:t2305m_app/screen/auth/login_screen.dart';
 
 class CartScreen extends StatelessWidget {
@@ -6,171 +9,179 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dữ liệu giả cho phụ huynh
-    final Map<String, String> parentInfo = {
-      "name": "Anh Tuấn",
-      "phone": "0906550962",
-      "address": "123 Đường ABC, TP.HCM",
-    };
+    final apiService = ApiService(Dio());
+    final Future<List<User>> users = apiService.getUsers();
 
     return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Thông tin phụ huynh
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blue.shade100,
-                  radius: 30,
-                  child: const Icon(Icons.person, color: Colors.white, size: 40),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Phụ huynh: ${parentInfo['name']}",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text("SĐT: ${parentInfo['phone']}"),
-                    const SizedBox(height: 4),
-                    Text("Địa chỉ: ${parentInfo['address']}"),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
+      body: FutureBuilder<List<User>>(
+        future: users,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Lỗi khi tải dữ liệu người dùng'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Không có dữ liệu người dùng'));
+          } else {
+            final user = snapshot.data!.first;
 
-          // Các mục tiện ích
-          ListTile(
-            leading: const Icon(Icons.child_care, color: Colors.blue),
-            title: const Text("Quản lý thông tin con"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditChildInfoScreen()),
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.lock, color: Colors.blue),
-            title: const Text("Đổi mật khẩu"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
-              );
-            },
-          ),
-          const Divider(),
-
-          // Trung tâm trợ giúp và Đăng xuất
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+            return ListView(
+              padding: const EdgeInsets.all(16),
               children: [
+                // Thông tin phụ huynh từ API
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
+                  color: Colors.white,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.blue.shade100,
+                        radius: 30,
+                        child: const Icon(Icons.person, color: Colors.white, size: 40),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Phụ huynh: ${user.name}",
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text("Mã HS: ${user.id}"),
+                        ],
                       ),
                     ],
                   ),
+                ),
+                const Divider(),
+
+                // Các mục tiện ích
+                ListTile(
+                  leading: const Icon(Icons.child_care, color: Colors.blue),
+                  title: const Text("Quản lý thông tin con"),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EditChildInfoScreen()),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.lock, color: Colors.blue),
+                  title: const Text("Đổi mật khẩu"),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                    );
+                  },
+                ),
+                const Divider(),
+
+                // Trung tâm trợ giúp và Đăng xuất
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Bạn đang gặp vấn đề cần hỗ trợ ?",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       Container(
-                        color: Colors.white,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              child: Image.asset(
-                                'assets/images/QA.png',
-                                width: 48,
-                                height: 48,
+                            const Text(
+                              "Bạn đang gặp vấn đề cần hỗ trợ ?",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // Chuyển đến Trung tâm trợ giúp
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const HelpCenterScreen()),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.lightBlue.shade100,
-                                  foregroundColor: Colors.lightBlue.shade600,
-                                ),
-                                child: const Text("Trung tâm trợ giúp"),
+                            const SizedBox(height: 8),
+                            Container(
+                              color: Colors.white,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Image.asset(
+                                      'assets/images/QA.png',
+                                      width: 48,
+                                      height: 48,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const HelpCenterScreen()),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.lightBlue.shade100,
+                                        foregroundColor: Colors.lightBlue.shade600,
+                                      ),
+                                      child: const Text("Trung tâm trợ giúp"),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
+                      const SizedBox(height: 8),
+                      Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: TextButton.icon(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const LoginScreen()),
+                            );
+                          },
+                          icon: const Icon(Icons.logout, color: Colors.red),
+                          label: const Text(
+                            "Đăng xuất",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: TextButton.icon(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
-                    },
-                    icon: const Icon(Icons.logout, color: Colors.red),
-                    label: const Text(
-                      "Đăng xuất",
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+        },
       ),
     );
   }

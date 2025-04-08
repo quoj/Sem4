@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'announcements.g.dart';
@@ -20,6 +21,7 @@ class Announcement {
     required this.createdAt,
   });
 
+  /// Chuyển đổi JSON thành Object
   factory Announcement.fromJson(Map<String, dynamic> json) {
     return Announcement(
       id: json['id'],
@@ -27,10 +29,11 @@ class Announcement {
       author: json['author'],
       content: json['content'],
       imagePath: json['imagePath'],
-      createdAt: json['createdAt'],
+      createdAt: _formatDateTime(json['createdAt']), // Xử lý thời gian
     );
   }
 
+  /// Chuyển đổi Object thành JSON
   Map<String, dynamic> toJson() {
     return {
       "id": id,
@@ -40,5 +43,16 @@ class Announcement {
       "imagePath": imagePath,
       "createdAt": createdAt,
     };
+  }
+
+  /// Hàm định dạng thời gian
+  static String _formatDateTime(String? dateTime) {
+    if (dateTime == null || dateTime.isEmpty) return "Không xác định";
+    try {
+      DateTime parsedDate = DateTime.parse(dateTime);
+      return DateFormat('hh:mm a, dd/MM/yyyy').format(parsedDate);
+    } catch (e) {
+      return "Không xác định";
+    }
   }
 }

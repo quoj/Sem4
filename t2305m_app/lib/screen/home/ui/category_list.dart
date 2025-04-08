@@ -1,8 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:t2305m_app/screen/home/ui/category_item.dart';
+import '../../../api/api_service.dart';
 import '../../../model/category.dart';
 import '../../../service/category_service.dart';
-
+import '../../../models/announcements.dart';
+import '../../../service/announcement_service.dart';
 class CategoryList extends StatefulWidget {
   const CategoryList({super.key});
 
@@ -88,8 +91,39 @@ class _CategoryListState extends State<CategoryList> {
 }
 
 
-class BulletinWidget extends StatelessWidget {
+class BulletinWidget extends StatefulWidget {
   const BulletinWidget({super.key});
+
+  @override
+  _BulletinWidgetState createState() => _BulletinWidgetState();
+}
+
+class _BulletinWidgetState extends State<BulletinWidget> {
+  late ApiService apiService;
+  List<Announcement> announcements = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService(Dio());
+    fetchAnnouncements();
+  }
+
+  void fetchAnnouncements() async {
+    try {
+      List<Announcement> data = await apiService.getAnnouncements();
+      setState(() {
+        announcements = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi API: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,11 +136,10 @@ class BulletinWidget extends StatelessWidget {
       },
       child: SizedBox(
         width: double.infinity,
-        height: 450, // Chiều cao để chứa nội dung
+        height: 450,
         child: Stack(
-          clipBehavior: Clip.none, // Cho phép tràn
+          clipBehavior: Clip.none,
           children: [
-            // Header "Bảng tin"
             const Positioned(
               top: 5,
               left: 5,
@@ -119,89 +152,88 @@ class BulletinWidget extends StatelessWidget {
                 ),
               ),
             ),
-            // Author info
-            Positioned(
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : announcements.isEmpty
+                ? const Center(child: Text("Không có thông báo nào"))
+                : Positioned(
               top: 60,
               left: 15,
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
-                    backgroundImage: AssetImage("assets/images/gopy.jpg"), // Ảnh đại diện
-                    radius: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Cô giáo A",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        backgroundImage: AssetImage("assets/images/gopy.jpg"),
+                        radius: 20,
                       ),
-                      Text(
-                        "10:30 AM",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            announcements[0].author,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            announcements[0].createdAt,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    announcements[0].title,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  SizedBox(
+                    width: 340,
+                    child: Text(
+                      announcements[0].content,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      "http://10.0.2.2:8080/${announcements[0].imagePath}",
+                      width: 350,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.image_not_supported, size: 100);
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-            // Post title
-            const Positioned(
-              top: 110,
-              left: 15,
-              child: Text(
-                "Hoạt động hôm nay của các con",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            // Post content
-            const Positioned(
-              top: 140,
-              left: 15,
-              child: SizedBox(
-                width: 340, // Đặt chiều rộng để tránh bị cắt
-                child: Text(
-                  "Hôm nay các con đã có buổi học rất thú vị về khóa học. Các con đã làm thí nghiệm với nước và màu sắc.",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ),
-            // Image below content
-            Positioned(
-              top: 200,
-              left: 15,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  "assets/images/noithat.jpg",
-                  width: 350,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-
           ],
         ),
       ),
     );
   }
 }
+
 
 
 class BulletinPage extends StatefulWidget {
@@ -212,7 +244,32 @@ class BulletinPage extends StatefulWidget {
 }
 
 class _BulletinPageState extends State<BulletinPage> {
+  late ApiService apiService;
+  List<Announcement> announcements = [];
+  bool isLoading = true;
   Map<int, bool> likedPosts = {};
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService(Dio());
+    fetchAnnouncements();
+  }
+
+  void fetchAnnouncements() async {
+    try {
+      List<Announcement> data = await apiService.getAnnouncements();
+      setState(() {
+        announcements = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi API: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void toggleLike(int index) {
     setState(() {
@@ -224,43 +281,21 @@ class _BulletinPageState extends State<BulletinPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Bảng tin")),
-      body: Padding(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : announcements.isEmpty
+          ? const Center(child: Text("Không có thông báo nào"))
+          : ListView.builder(
         padding: const EdgeInsets.all(8.0),
-        child: ListView(
-          children: [
-            _buildPost(
-              context,
-              index: 0,
-              title: "Hoạt động hôm nay của các con",
-              author: "Cô giáo A",
-              content: "Hôm nay các con đã có buổi học rất thú vị về khoa học. Các con đã làm thí nghiệm với nước và màu sắc.",
-              imagePath: "assets/images/noithat.jpg",
-              time: "10:30 AM",
-            ),
-            _buildPost(
-              context,
-              index: 1,
-              title: "Hoạt động ngoài trời",
-              author: "Cô giáo B",
-              content: "Các con đã có buổi chơi ngoài trời rất vui vẻ. Các con đã tham gia các trò chơi vận động như nhảy dây, đá bóng, và chạy đua.",
-              imagePath: "assets/images/noithat.jpg",
-              time: "2:00 PM",
-            ),
-          ],
-        ),
+        itemCount: announcements.length,
+        itemBuilder: (context, index) {
+          return _buildPost(context, index, announcements[index]);
+        },
       ),
     );
   }
 
-  Widget _buildPost(
-      BuildContext context, {
-        required int index,
-        required String title,
-        required String author,
-        required String content,
-        required String imagePath,
-        required String time,
-      }) {
+  Widget _buildPost(BuildContext context, int index, Announcement announcement) {
     bool isLiked = likedPosts[index] ?? false;
 
     return Card(
@@ -272,7 +307,6 @@ class _BulletinPageState extends State<BulletinPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Avatar + Tên + Thời gian
             Row(
               children: [
                 const CircleAvatar(
@@ -283,29 +317,31 @@ class _BulletinPageState extends State<BulletinPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(author, style: const TextStyle(fontSize: 12,fontWeight: FontWeight.bold)),
-                    Text(time, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(announcement.author, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(announcement.createdAt, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            // Tiêu đề bài đăng
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(announcement.title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            // Nội dung bài đăng
-            Text(content , style: const TextStyle(fontSize: 12)),
+            Text(announcement.content, style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 8),
-            // Ảnh minh họa
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(imagePath, fit: BoxFit.cover),
+              child: Image.network(
+                "http://10.0.2.2:8080/${announcement.imagePath}",
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.image_not_supported, size: 100);
+                },
+              ),
             ),
             const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.start,  // Giữ các phần tử gần nhau
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                // Thích
                 Row(
                   children: [
                     IconButton(
@@ -318,8 +354,7 @@ class _BulletinPageState extends State<BulletinPage> {
                     Text(isLiked ? "Đã yêu thích" : "Yêu thích"),
                   ],
                 ),
-                const SizedBox(width: 100), // Đảm bảo khoảng cách chính xác là 20
-                // Bình luận
+                const SizedBox(width: 100),
                 Row(
                   children: [
                     IconButton(
@@ -341,9 +376,9 @@ class _BulletinPageState extends State<BulletinPage> {
         ),
       ),
     );
-
   }
 }
+
 
 class CommentScreen extends StatefulWidget {
   const CommentScreen({super.key});

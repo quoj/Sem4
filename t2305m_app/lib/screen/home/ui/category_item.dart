@@ -3,6 +3,9 @@ import 'package:t2305m_app/api/api_service.dart';
 import 'package:t2305m_app/models/feedback.dart';
 import 'package:t2305m_app/models/schedule.dart';
 import 'package:t2305m_app/models/messages.dart';
+import 'package:t2305m_app/models/tuition.dart';
+import 'package:t2305m_app/models/health.dart';
+
 import 'package:flutter/material.dart';
 import 'package:t2305m_app/model/category.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +13,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../models/study_comments.dart';
+import '../../../models/study_results.dart';
 
 class CategoryItem extends StatelessWidget {
   final Category category;
@@ -957,13 +962,60 @@ class StudyPage extends StatefulWidget {
 }
 
 class _StudyPageState extends State<StudyPage> with SingleTickerProviderStateMixin {
+  late ApiService apiService;
   late TabController _tabController;
+
+  List<StudyComment> studyComments = [];
+  List<StudyResult> studyResults = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    apiService = ApiService(Dio());
     _tabController = TabController(length: 2, vsync: this);
+    fetchStudyComments();  // Lấy dữ liệu nhận xét
+    fetchStudyResults();  // Lấy dữ liệu kết quả học tập
   }
+
+  // Hàm để lấy dữ liệu StudyComment
+  void fetchStudyComments() async {
+    try {
+      print("🟡 Gọi API: Lấy danh sách nhận xét học tập...");
+      List<StudyComment> data = await apiService.getStudyComment();
+      print("✅ Dữ liệu nhận được: $data");
+
+      setState(() {
+        studyComments = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("❌ Lỗi API StudyComments: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Hàm để lấy dữ liệu StudyResult
+  void fetchStudyResults() async {
+    try {
+      print("🟡 Gọi API: Lấy danh sách kết quả học tập...");
+      List<StudyResult> data = await apiService.getStudyResult();
+      print("✅ Dữ liệu nhận được: $data");
+
+      setState(() {
+        studyResults = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("❌ Lỗi API StudyResults: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -1153,31 +1205,59 @@ class _StudyPageState extends State<StudyPage> with SingleTickerProviderStateMix
 
 
 
-class HealthPage extends StatelessWidget {
+class HealthPage extends StatefulWidget {
   const HealthPage({super.key});
+
+  @override
+  _HealthPageState createState() => _HealthPageState();
+}
+
+class _HealthPageState extends State<HealthPage> {
+  late ApiService apiService;
+  late Future<List<Health>> _healthData;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService(Dio());
+    _healthData = apiService.getHealth(); // Lấy dữ liệu sức khỏe từ API
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Sức khỏe")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildProfileCard(),
-            const SizedBox(height: 20),
-            _buildHealthOptions(context),
-            const SizedBox(height: 20),
-            _buildHealthNotes(),
-          ],
-        ),
+      body: FutureBuilder<List<Health>>(
+        future: _healthData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator()); // Hiển thị loading khi đang tải dữ liệu
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Lỗi: ${snapshot.error}")); // Hiển thị lỗi nếu có
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("Không có dữ liệu")); // Nếu không có dữ liệu
+          } else {
+            final health = snapshot.data![0]; // Chọn phần tử đầu tiên từ danh sách
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildProfileCard(health),
+                  const SizedBox(height: 20),
+                  _buildHealthOptions(context),
+                  const SizedBox(height: 20),
+                  _buildHealthNotes(health),
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
   }
 
-  /// **Widget Thông tin cá nhân và sức khỏe**
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(Health health) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1189,23 +1269,23 @@ class HealthPage extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: AssetImage("assets/images/bangtin.png"), // Ảnh đại diện
+                  backgroundImage: const AssetImage("assets/images/bangtin.png"), // Ảnh đại diện
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Đinh Việt Trung",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    Text(
+                      health.name,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Row(
-                      children: const [
-                        Text("21/06/2021", style: TextStyle(color: Colors.grey)),
-                        SizedBox(width: 8),
-                        Icon(Icons.male, color: Colors.blue, size: 18),
-                        Text(" Nam", style: TextStyle(color: Colors.blue)),
+                      children: [
+                        Text(health.birthDate, style: const TextStyle(color: Colors.grey)),
+                        const SizedBox(width: 8),
+                        Icon(health.gender == "Nam" ? Icons.male : Icons.female, color: Colors.blue, size: 18),
+                        Text(health.gender, style: const TextStyle(color: Colors.blue)),
                       ],
                     ),
                   ],
@@ -1216,9 +1296,8 @@ class HealthPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildHealthStat("24", "Tháng tuổi"),
-                _buildHealthStat("89 cm", "Chiều cao"),
-                _buildHealthStat("14 kg", "Cân nặng"),
+                _buildHealthStat("${health.height} cm", "Chiều cao"),
+                _buildHealthStat("${health.weight} kg", "Cân nặng"),
               ],
             ),
           ],
@@ -1227,7 +1306,6 @@ class HealthPage extends StatelessWidget {
     );
   }
 
-  /// **Widget Hiển thị chỉ số sức khỏe**
   Widget _buildHealthStat(String value, String label) {
     return Column(
       children: [
@@ -1237,22 +1315,51 @@ class HealthPage extends StatelessWidget {
     );
   }
 
-  /// **Widget "Tăng trưởng" và "Sổ sức khỏe"**
+  Widget _buildHealthNotes(Health health) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Lưu ý về sức khỏe của bé",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              health.healthNotes,
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHealthOptions(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildHealthButton(Icons.show_chart, "Tăng trưởng", () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const GrowthPage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const GrowthPage()), // Chuyển đến trang Tăng trưởng
+          );
         }),
         _buildHealthButton(Icons.health_and_safety, "Sổ sức khỏe", () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const HealthRecordsPage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HealthRecordsPage()), // Chuyển đến trang Sổ sức khỏe
+          );
         }),
       ],
     );
   }
 
-  /// **Widget Nút Chức Năng**
   Widget _buildHealthButton(IconData icon, String label, VoidCallback onTap) {
     return Expanded(
       child: InkWell(
@@ -1274,37 +1381,7 @@ class HealthPage extends StatelessWidget {
       ),
     );
   }
-
-  /// **Widget "Lưu ý sức khỏe của bé"**
-  Widget _buildHealthNotes() {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Lưu ý về sức khỏe của bé",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Thêm lưu ý cho giáo viên về các vấn đề sức khỏe của con\n- Ví dụ: Dị ứng hải sản",
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
 }
-
-/// **📌 Trang "Tăng trưởng" (Chiều cao & Cân nặng)**
-
-
 class GrowthPage extends StatelessWidget {
   const GrowthPage({super.key});
 
@@ -1312,182 +1389,27 @@ class GrowthPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Tăng trưởng")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            const Text("Chiều cao học sinh lớp Mầm 1", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            _buildGrowthRecord("01/2024", "87 cm", "13.5 kg"),
-            _buildGrowthRecord("02/2024", "88 cm", "13.8 kg"),
-            _buildGrowthRecord("03/2024", "89 cm", "14 kg"),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGrowthRecord(String date, String height, String weight) {
-    return Card(
-      elevation: 3,
-      child: ListTile(
-        title: Text("Ngày: $date"),
-        subtitle: Text("Chiều cao: $height | Cân nặng: $weight"),
+      body: Center(
+        child: Text("Chi tiết Tăng trưởng sẽ được hiển thị ở đây."),
       ),
     );
   }
 }
-
-class HeightChartPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = Colors.black;
-
-    final heightData = [87.0, 88.0, 89.0]; // Dữ liệu chiều cao
-    final minX = 0;
-    final maxX = heightData.length - 1;
-    final minY = 87.0;
-    final maxY = 89.0;
-
-    // Draw the grid
-    for (int i = minY.toInt(); i <= maxY; i++) {
-      final y = size.height * (1 - (i - minY) / (maxY - minY));
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    for (int i = minX; i <= maxX; i++) {
-      final x = size.width * (i - minX) / (maxX - minX);
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    // Draw the line chart
-    final path = Path();
-    for (int i = 0; i < heightData.length; i++) {
-      final x = size.width * i / (heightData.length - 1);
-      final y = size.height * (1 - (heightData[i] - minY) / (maxY - minY));
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 4;
-    paint.color = Colors.blue;
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
-
-
-/// **📌 Trang "Sổ sức khỏe" (Lịch sử khám & hồ sơ)**
-
 
 class HealthRecordsPage extends StatelessWidget {
   const HealthRecordsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Sổ sức khỏe"),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: "Khám định kỳ"),
-              Tab(text: "Hồ sơ sức khỏe"),
-            ],
-          ),
-        ),
-        body: const TabBarView(
-          children: [
-            PeriodicCheckupPage(),
-            HealthProfilePage(),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text("Sổ sức khỏe")),
+      body: Center(
+        child: Text("Thông tin Sổ sức khỏe sẽ được hiển thị ở đây."),
       ),
     );
   }
 }
 
-class PeriodicCheckupPage extends StatelessWidget {
-  const PeriodicCheckupPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Lịch sử khám sức khỏe", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          _buildHealthRecord("15/01/2024", "Khám tổng quát", "Bình thường"),
-          _buildHealthRecord("20/02/2024", "Tiêm phòng cúm", "Hoàn thành"),
-          _buildHealthRecord("10/03/2024", "Kiểm tra dinh dưỡng", "Đủ tiêu chuẩn"),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHealthRecord(String date, String type, String status) {
-    return Card(
-      elevation: 3,
-      child: ListTile(
-        title: Text("Ngày: $date"),
-        subtitle: Text("$type - Trạng thái: $status"),
-      ),
-    );
-  }
-}
-
-class HealthProfilePage extends StatelessWidget {
-  const HealthProfilePage({super.key});
-
-  String _getFormattedDate(int daysAgo) {
-    final date = DateTime.now().subtract(Duration(days: daysAgo));
-    return DateFormat('dd/MM/yyyy').format(date);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Hồ sơ sức khỏe", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          _buildHealthRecord(_getFormattedDate(1), "Chiều cao", "Đạt 89 cm", Icons.height, Colors.blue),
-          _buildHealthRecord(_getFormattedDate(2), "Cân nặng", "Tăng 0.5 kg", Icons.fitness_center, Colors.red),
-          _buildHealthRecord(_getFormattedDate(3), "Sức khỏe tổng quát", "Bình thường", Icons.check_circle, Colors.green),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHealthRecord(String date, String type, String status, IconData icon, Color iconColor) {
-    return Card(
-      elevation: 3,
-      child: ListTile(
-        leading: Icon(icon, color: iconColor),
-        title: Text("Ngày: $date"),
-        subtitle: Text("$type - Trạng thái: $status"),
-      ),
-    );
-  }
-}
 
 
 class ContactsPage extends StatelessWidget {
