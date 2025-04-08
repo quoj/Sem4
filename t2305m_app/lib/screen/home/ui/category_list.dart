@@ -215,7 +215,7 @@ class _BulletinWidgetState extends State<BulletinWidget> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      "http://10.0.2.2:8080/${announcements[0].imagePath}",
+                      announcements[0].imagePath,
                       width: 350,
                       height: 200,
                       fit: BoxFit.cover,
@@ -329,9 +329,11 @@ class _BulletinPageState extends State<BulletinPage> {
             Text(announcement.content, style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               child: Image.network(
-                "http://10.0.2.2:8080/${announcement.imagePath}",
+                announcements[0].imagePath,
+                width: 350,
+                height: 200,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return const Icon(Icons.image_not_supported, size: 100);

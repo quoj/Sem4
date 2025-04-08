@@ -122,9 +122,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 5),
             announcement.imagePath.isNotEmpty
                 ? Image.network(
-              "http://10.0.2.2:8080/${announcement.imagePath}",
+              announcement.imagePath,
+              fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, size: 100),
             )
+
                 : Container(),
           ],
         ),
