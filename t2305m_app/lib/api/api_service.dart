@@ -10,6 +10,7 @@ import '../models/schedule.dart';
 import '../models/feedback.dart';
 import '../models/tuition.dart';
 import '../models/health.dart';
+import '../models/images.dart';
 
 import 'package:retrofit/error_logger.dart';
 
@@ -58,4 +59,8 @@ abstract class ApiService {
 
   @GET("/health")
   Future<List<Health>> getHealth();
+
+  @GET("/images")
+  Future<List<Image>> getImages();
+
 }

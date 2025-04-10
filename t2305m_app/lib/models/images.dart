@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'images.g.dart';
@@ -15,21 +14,6 @@ class Image {
     required this.imagePath,
   });
 
-  /// Chuyển đổi JSON thành Object
-  factory Image.fromJson(Map<String, dynamic> json) {
-    return Image(
-      id: json['id'],
-      announcementId: json['announcementId'],
-      imagePath: json['imagePath'],
-    );
-  }
-
-  /// Chuyển đổi Object thành JSON
-  Map<String, dynamic> toJson() {
-    return {
-      "id": id,
-      "announcementId": announcementId,
-      "imagePath": imagePath,
-    };
-  }
+  factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);
+  Map<String, dynamic> toJson() => _$ImageToJson(this);
 }
